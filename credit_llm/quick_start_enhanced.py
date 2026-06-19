@@ -1,6 +1,6 @@
 """
 CREDIT RISK ASSESSMENT - CORRECTED VERSION (NO DATA LEAKAGE)
-Daniel Agyekum Amakye - IT University of Copenhagen
+Author: Daniel Agyekum Amakye
 """
 
 import pandas as pd
@@ -17,7 +17,7 @@ warnings.filterwarnings('ignore')
 
 print("=" * 70)
 print("CREDIT RISK ASSESSMENT - CORRECTED (NO DATA LEAKAGE)")
-print("Daniel Agyekum Amakye - IT University of Copenhagen")
+print("Daniel Agyekum Amakye")
 print("=" * 70)
 
 # ============================================
@@ -278,7 +278,7 @@ Interpretation:
    - Results are realistic and believable
    - No data leakage (test split was never used for training)
    - LLM scores generated from training data only
-   - Calibration gap of {abs(gap):.2%} confirms the need for your PhD research
+   - Calibration gap of {abs(gap):.2%} confirms the need for calibration research
 """)
 
 print("=" * 70)

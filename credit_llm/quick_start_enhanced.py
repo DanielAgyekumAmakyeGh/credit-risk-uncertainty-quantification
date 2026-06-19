@@ -15,6 +15,11 @@ from imblearn.over_sampling import SMOTE
 import warnings
 warnings.filterwarnings('ignore')
 
+# Set style for Ghana-themed visualizations
+plt.style.use('seaborn-v0_8-darkgrid')
+sns.set_palette(["#006B3F", "#F5D100", "#CE1126", "#1E3A8A", "#0D9488"])
+GHANA_COLORS = ['#006B3F', '#F5D100', '#CE1126', '#1E3A8A', '#0D9488']
+
 print("=" * 70)
 print("CREDIT RISK ASSESSMENT - CORRECTED (NO DATA LEAKAGE)")
 print("Daniel Agyekum Amakye")
@@ -240,7 +245,99 @@ print(f"      Accuracy: {hybrid_acc:.4f} ({hybrid_acc:.2%})")
 print(f"      AUC-ROC: {hybrid_auc:.4f} ({hybrid_auc:.2%})")
 
 # ============================================
-# STEP 7: Results Summary
+# STEP 7: VISUALIZATIONS (FIXED)
+# ============================================
+
+print("\n[7/7] Generating visualizations...")
+
+# Create figure with subplots
+fig, axes = plt.subplots(2, 3, figsize=(18, 12))
+
+# 1. Default Rate by Region
+ax1 = axes[0, 0]
+region_default = df.groupby('region')['default'].mean().sort_values(ascending=False)
+region_default.plot(kind='bar', ax=ax1, color=GHANA_COLORS)
+ax1.set_title('Default Rate by Region', fontweight='bold')
+ax1.set_xlabel('Region')
+ax1.set_ylabel('Default Rate')
+ax1.tick_params(axis='x', rotation=45)
+ax1.grid(True, alpha=0.3)
+
+# 2. Default Rate by Employment
+ax2 = axes[0, 1]
+emp_default = df.groupby('employment_status')['default'].mean().sort_values(ascending=False).head(5)
+emp_default.plot(kind='bar', ax=ax2, color=GHANA_COLORS[1])
+ax2.set_title('Default Rate by Employment', fontweight='bold')
+ax2.set_xlabel('Employment')
+ax2.set_ylabel('Default Rate')
+ax2.tick_params(axis='x', rotation=45)
+ax2.grid(True, alpha=0.3)
+
+# 3. Credit Score Distribution - FIXED
+ax3 = axes[0, 2]
+good_credit = df[df['default'] == 0]['credit_score']
+default_credit = df[df['default'] == 1]['credit_score']
+
+ax3.hist(good_credit, bins=30, alpha=0.6, label='Good (No Default)', 
+         color=GHANA_COLORS[0], edgecolor='black', linewidth=0.5)
+ax3.hist(default_credit, bins=30, alpha=0.6, label='Default', 
+         color=GHANA_COLORS[2], edgecolor='black', linewidth=0.5)
+ax3.set_title('Credit Score Distribution by Default Status', fontweight='bold')
+ax3.set_xlabel('Credit Score')
+ax3.set_ylabel('Frequency')
+ax3.legend()
+ax3.grid(True, alpha=0.3)
+
+# 4. Mobile Money Penetration by Region
+ax4 = axes[1, 0]
+mm_by_region = df.groupby('region')['has_mobile_money'].mean().sort_values(ascending=False)
+mm_by_region.plot(kind='bar', ax=ax4, color=GHANA_COLORS[3])
+ax4.set_title('Mobile Money Penetration by Region', fontweight='bold')
+ax4.set_xlabel('Region')
+ax4.set_ylabel('Mobile Money Penetration')
+ax4.tick_params(axis='x', rotation=45)
+ax4.grid(True, alpha=0.3)
+
+# 5. Model Comparison
+ax5 = axes[1, 1]
+comparison_data = pd.DataFrame({
+    'Model': ['Baseline (No LLM)', 'Hybrid (With LLM)'],
+    'Accuracy': [baseline_acc, hybrid_acc],
+    'AUC-ROC': [baseline_auc, hybrid_auc]
+})
+comparison_data_melted = comparison_data.melt(id_vars=['Model'], var_name='Metric', value_name='Score')
+sns.barplot(data=comparison_data_melted, x='Model', y='Score', hue='Metric', ax=ax5)
+ax5.set_title('Baseline vs Hybrid Model Performance', fontweight='bold')
+ax5.set_ylim(0, 1)
+ax5.set_ylabel('Score')
+ax5.legend(loc='lower right')
+ax5.tick_params(axis='x', rotation=45)
+
+# 6. Calibration Gap Visualization
+ax6 = axes[1, 2]
+confidence = np.mean(1 - 2 * np.abs(y_prob_h - 0.5))
+accuracy = hybrid_acc
+gap = accuracy - confidence
+
+ax6.bar(['Model Confidence', 'Actual Accuracy'], [confidence, accuracy], 
+        color=[GHANA_COLORS[1], GHANA_COLORS[0]])
+ax6.set_ylim(0, 1)
+ax6.set_ylabel('Percentage')
+ax6.set_title(f'Calibration Gap: {abs(gap):.2%}', fontweight='bold')
+for i, v in enumerate([confidence, accuracy]):
+    ax6.text(i, v + 0.02, f'{v:.2%}', ha='center', fontweight='bold')
+ax6.annotate(f'Gap: {abs(gap):.2%}', xy=(0.5, (confidence + accuracy)/2), 
+             xytext=(0.5, (confidence + accuracy)/2 + 0.1),
+             arrowprops=dict(arrowstyle='<->', color=GHANA_COLORS[2]),
+             ha='center', fontweight='bold', color=GHANA_COLORS[2])
+
+plt.tight_layout()
+plt.savefig('ghana_credit_analysis.png', dpi=150, bbox_inches='tight', facecolor='white')
+print("✅ Saved: ghana_credit_analysis.png")
+plt.close()
+
+# ============================================
+# STEP 8: Results Summary
 # ============================================
 
 print("\n" + "=" * 70)
@@ -250,10 +347,6 @@ print("=" * 70)
 # Calculate improvement
 improvement_acc = (hybrid_acc - baseline_acc) / baseline_acc * 100
 improvement_auc = (hybrid_auc - baseline_auc) / baseline_auc * 100
-
-# Calibration analysis
-confidence = np.mean(1 - 2 * np.abs(y_prob_h - 0.5))
-gap = hybrid_acc - confidence
 
 print(f"""
 Dataset Statistics:
@@ -279,6 +372,9 @@ Interpretation:
    - No data leakage (test split was never used for training)
    - LLM scores generated from training data only
    - Calibration gap of {abs(gap):.2%} confirms the need for calibration research
+
+Output Files Generated:
+   1. ghana_credit_analysis.png - Comprehensive visualizations
 """)
 
 print("=" * 70)

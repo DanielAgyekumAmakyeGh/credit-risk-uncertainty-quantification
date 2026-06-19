@@ -1,0 +1,47 @@
+# Credit Risk Assessment Configuration
+
+project:
+  name: "credit_risk_assessment"
+  version: "1.0.0"
+  author: "Daniel Agyekum Amakye"
+  institution: "IT University of Copenhagen"
+
+data:
+  n_samples: 100000
+  test_size: 0.2
+  random_state: 42
+  target_col: "default"
+
+llm:
+  model_name: "bert-base-uncased"
+  max_length: 128
+  batch_size: 32
+  epochs: 4
+  learning_rate: 2e-5
+  warmup_steps: 0.1
+
+model:
+  lightgbm:
+    n_estimators: 200
+    max_depth: 10
+    learning_rate: 0.05
+    class_weight: "balanced"
+
+  xgboost:
+    n_estimators: 200
+    max_depth: 6
+    learning_rate: 0.1
+
+  random_forest:
+    n_estimators: 100
+    max_depth: 10
+
+calibration:
+  method: "sigmoid"
+  cv_folds: 5
+
+output:
+  models_dir: "outputs/models/"
+  figures_dir: "outputs/figures/"
+  reports_dir: "outputs/reports/"
+  logs_dir: "outputs/logs/"
